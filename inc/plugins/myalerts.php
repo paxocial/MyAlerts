@@ -442,6 +442,14 @@ function myalerts_activate()
 
 	$plugins->run_hooks('myalerts_activate');
 }
+/**
+ * Check if MyAlerts is installed and active.
+ *
+ * @return bool True if installed and active, false otherwise.
+ */
+function myalerts_is_active() {
+    return function_exists('myalerts_is_installed') && myalerts_is_installed() && function_exists('myalerts_is_activated') && myalerts_is_activated();
+}
 
 function myalerts_upgrade_105_200()
 {
@@ -1937,18 +1945,67 @@ function myalerts_xmlhttp()
 		);
 	}
 }
-/************************ MYPGR O6 ***************/
-		if($mybb->input['action'] == 'getNumUnreadAlertsandconvs')
-		{
-			$query = $db->query("SELECT cid FROM ".TABLE_PREFIX."cnv_participants WHERE  uid = '{$mybb->user['uid']}'
-			AND cid NOT IN (SELECT cid FROM ".TABLE_PREFIX."cnv_readconversations WHERE  uid = '{$mybb->user['uid']}')" );
-			die(json_encode([
-			"status" => "done",
-			"newalerts" => MybbStuff_MyAlerts_AlertManager::getInstance()->getNumUnreadAlerts(),
-			"newconvs" => $db->num_rows($query)
-			]));
-		}
-	/************************ MYPGR O6 ***************/
+// Safely check if 'action' is set and equals 'getNumUnreadAlertsandconvs'
+if (isset($mybb->input['action']) && $mybb->input['action'] === 'getNumUnreadAlertsandconvs') {
+    $uid = (int)$mybb->user['uid']; // Sanitize user ID
+
+    // Prepare SQL query to prevent SQL injection
+    $query = $db->query("
+        SELECT cid
+        FROM ".TABLE_PREFIX."cnv_participants
+        WHERE uid = '{$uid}'
+        AND cid NOT IN (
+            SELECT cid
+            FROM ".TABLE_PREFIX."cnv_readconversations
+            WHERE uid = '{$uid}'
+        )
+    ");
+
+    // Fetch the number of unread conversations
+    $newconvs = $db->num_rows($query);
+
+    // Fetch the number of unread alerts
+    $newalerts = MybbStuff_MyAlerts_AlertManager::getInstance()->getNumUnreadAlerts();
+
+    // Respond with JSON data
+    die(json_encode([
+        "status" => "done",
+        "newalerts" => $newalerts,
+        "newconvs" => $newconvs
+    ]));
+}
+/**
+ * Get the number of unread conversations for the current user.
+ *
+ * @return int Number of unread conversations.
+ */
+function myalerts_get_unread_conversations_count() {
+    global $db, $mybb;
+
+    $uid = (int)$mybb->user['uid'];
+
+    if ($uid < 1) {
+        return 0;
+    }
+
+    // Prepare SQL query to prevent SQL injection
+    $query = $db->query("
+        SELECT cid
+        FROM " . TABLE_PREFIX . "cnv_participants
+        WHERE uid = '{$uid}'
+        AND cid NOT IN (
+            SELECT cid
+            FROM " . TABLE_PREFIX . "cnv_readconversations
+            WHERE uid = '{$uid}'
+        )
+    ");
+
+    // Fetch the number of unread conversations
+    $newconvs = $db->num_rows($query);
+
+    return $newconvs;
+}
+
 function myalerts_register_core_formatters($mybb, $lang)
 {
 	/** @var MybbStuff_Myalerts_AlertFormatterManager $formatterManager */
@@ -2065,7 +2122,8 @@ function cnv_build_forumbits_forum($forum)
 	return $forum;
 }
 
-/*************** MYPGR O6 ***************/function myalerts_can_view_thread($fid, $thread_uid, $alerted_uid) {
+/*************** MYPGR O6 ***************/
+function myalerts_can_view_thread($fid, $thread_uid, $alerted_uid) {
 	// Get forum permissions for the potentially alerted member.
 	$forumPerms = forum_permissions($fid, $alerted_uid);
 
