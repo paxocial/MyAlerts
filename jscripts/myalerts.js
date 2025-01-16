@@ -241,3 +241,84 @@
         var myalerts = new MybbStuff.MyAlerts();
     });
 })(jQuery, window, document, my_post_key);
+//***************************** MYPGR O6 ****************************//
+$(document).ready(function () {
+	setInterval(function() {
+				$.get("xmlhttp.php?action=getNumUnreadAlertsandconvs", function(data) {
+				var json = $.parseJSON(data);
+				if(typeof json == 'object')
+				{
+					if(json.hasOwnProperty("status"))
+					{
+						if(json.status == "done")
+						{
+						if(json.newalerts > 0)
+						{
+						$("#alertnumnx").removeClass().addClass('pmnumber-box-new');
+						}
+						else
+						{
+						$("#alertnumnx").removeClass().addClass('pmnumber-box');
+						}
+						if(json.newconvs > 0)
+						{
+						$("#convnumnx").removeClass().addClass('pmnumber-box-new');
+						}
+						else
+						{
+						$("#convnumnx").removeClass().addClass('pmnumber-box');
+						}
+
+						$("#alertnumnx").text(json.newalerts);
+						$("#convnumnx").text(json.newconvs);
+
+						}
+					}
+				}
+
+				});
+ }, 30000);
+
+$('#myalerts').click(function(e){
+
+$("#myalertsbx table.myapb-rows").load("alerts.php?action=view_myalertpop");
+	if($('#myalertsbx').css('display') == 'none')
+	{
+	$("#myalertsbx").show("fast");
+	$("#myconvsbx").hide("fast");
+	}
+	else
+	{
+	$("#myalertsbx").hide("fast");
+	}
+
+});
+
+$(document.body).on("click", ":not(#myalerts,#myconves,#alertnumnx,#myalertsbx, #myalertsbx *,#myconvsbx, #myconvsbx *, .floatright *)", function(e){
+if($(this).attr("id") !="undefined" && $(this).attr("class") !="floatright")
+{
+$("#myalertsbx").hide("fast");
+$("#myconvsbx").hide("fast");
+}
+e.stopPropagation();
+});
+
+/**************************************** MYPGR O6 ***********************************/
+$('#myconves').click(function(e){
+	//$.get("converse.php?action=view_myconvpop", function(data) {$("#myconvsbx table.myapb-rows").html(data);});
+	$("#myconvsbx table.myapb-rows").load("converse.php?action=view_myconvpop");
+	if($('#myconvsbx').css('display') == 'none')
+	{
+	$("#myconvsbx").show("fast");
+	$("#myalertsbx").hide("fast");
+	}
+	else
+	{
+	$("#myconvsbx").hide("fast");
+	}
+
+});
+/**************************************** MYPGR O6 ***********************************/
+
+});
+//***************************** MYPGR O6 ****************************//

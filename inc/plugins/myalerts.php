@@ -1937,7 +1937,18 @@ function myalerts_xmlhttp()
 		);
 	}
 }
-
+/************************ MYPGR O6 ***************/
+		if($mybb->input['action'] == 'getNumUnreadAlertsandconvs')
+		{
+			$query = $db->query("SELECT cid FROM ".TABLE_PREFIX."cnv_participants WHERE  uid = '{$mybb->user['uid']}'
+			AND cid NOT IN (SELECT cid FROM ".TABLE_PREFIX."cnv_readconversations WHERE  uid = '{$mybb->user['uid']}')" );
+			die(json_encode([
+			"status" => "done",
+			"newalerts" => MybbStuff_MyAlerts_AlertManager::getInstance()->getNumUnreadAlerts(),
+			"newconvs" => $db->num_rows($query)
+			]));
+		}
+	/************************ MYPGR O6 ***************/
 function myalerts_register_core_formatters($mybb, $lang)
 {
 	/** @var MybbStuff_Myalerts_AlertFormatterManager $formatterManager */
@@ -2035,8 +2046,26 @@ function myalerts_acp_config_permissions(&$admin_permissions)
 
 	$admin_permissions['myalerts_alert_types'] = $lang->myalerts_can_manage_alert_types;
 }
+/*************** MYPGR O6 ***************/
+$plugins->add_hook('build_forumbits_forum', 'cnv_build_forumbits_forum');
+function cnv_build_forumbits_forum($forum)
+{
+	global $db,$mybb;
+	if($forum['type'] =="c")
+	{
+	$query = $db->query("SELECT subject,tid,pid,dateline,uid FROM ".TABLE_PREFIX."posts WHERE fid IN (SELECT fid FROM ".TABLE_PREFIX."forums WHERE pid='{$forum['fid']}') ORDER BY dateline DESC LIMIT 1");
+	$row = $db->fetch_array($query);
+	$user = get_user($row['uid']);
+	$avatar = ($user['avatar'] == "") ?"images/default_avatar.png":$user['avatar'];
+	$forum['lpfpostinfo'] = '<div id="myfc_pt"><a href="showthread.php?tid='.$row['tid'].'&pid='.$row['pid'].'#pid'.$row['pid'].'">'.$row['subject'].'</a></div>';
+	$forum['lpfpostinfo'] .= '<div id="myfc_pd">'.my_date($mybb->settings['dateformat'], $row['dateline']).'</div>';
+	$forum['lpfpostinfo'] .= '<div id="myfc_pu"><a href="member.php?action=profile&uid='.$row['uid'].'"><img src="'.$avatar.'" /></a></div>';
+	}
 
-function myalerts_can_view_thread($fid, $thread_uid, $alerted_uid) {
+	return $forum;
+}
+
+/*************** MYPGR O6 ***************/function myalerts_can_view_thread($fid, $thread_uid, $alerted_uid) {
 	// Get forum permissions for the potentially alerted member.
 	$forumPerms = forum_permissions($fid, $alerted_uid);
 

@@ -1,4 +1,203 @@
-<li class="alerts {$newAlertsIndicator}">
-    <a href="{$mybb->settings['bburl']}/alerts.php" class="myalerts" onclick="MyBB.popupWindow('/alerts.php?modal=1&amp;ret_link={$myalerts_return_link}', { fadeDuration: 250, zIndex: (typeof modal_zindex !== 'undefined' ? modal_zindex : 9999) }); return false;">{$lang->myalerts_alerts}
-        ({$mybb->user['unreadAlerts']})</a>
-</li>
+<div id="myalertsbx" tabindex="-1">
+    <span class="myalertsbx-arrow"></span>
+    <h3 class="myapb-header">Alerts</h3>
+    <div class="myapb-content" style="border-top: unset !important;">
+        <table class="myapb-rows" style="width: 100%;background: #141414;">
+        </table>
+        <div class="myapb-footer myapb-footer--split">
+            <span class="myapb-footer-main">
+                <a href="alerts.php">show all…</a>
+            </span>
+            <span class="myapb-footer-opposite">
+                <a href="alerts.php?action=settings">Preferences</a>
+            </span>
+        </div>
+    </div>
+</div>
+<div id="myconvsbx" tabindex="-1">
+    <span class="myconvsbx-arrow"></span>
+    <h3 class="myapb-header">My Conversations</h3>
+    <div class="myapb-content" style="border-top: unset !important;">
+        <table class="myapb-rows" style="width: 100%;background: #141414;">
+        </table>
+    </div>
+</div>
+
+
+<style type="text/css">
+    /**************************** Mypgr ***************************/
+    .myalertsbx-arrow,
+    .myconvsbx-arrow {
+        position: absolute;
+        width: 0;
+        height: 0;
+        top: -14px;
+        margin-right: 0;
+        border: 13px solid transparent;
+        border-top-width: 13px;
+        border-bottom-color: transparent;
+        border-top-width: 0;
+        border-bottom-color: #aaa;
+        right: 0.7vw;
+    }
+
+    .myapb-footer-main {
+        float: left;
+    }
+
+    .myapb-footer-opposite {
+        float: right;
+    }
+
+    #alerttemp {
+        display: none;
+    }
+
+    #myalertsbx {
+        margin: 1.5vw 1.5vw 0 0;
+    }
+
+    #myconvsbx {
+        margin: 1.5vw 1.5vw 0 0;
+        right: 8vw;
+    }
+
+    #myalertsbx,
+    #myconvsbx {
+        display: none;
+        border-top-right-radius: 0;
+        width: 300px;
+        max-width: calc(100% - 10px);
+        overflow: unset;
+        max-height: 450px;
+        max-height: 80vh;
+        z-index: 400;
+        -webkit-transition: all .25s ease, -xf-opacity .25s ease;
+        transition: all .25s ease, -xf-opacity .25s ease;
+        position: fixed;
+        min-width: 240px;
+        max-width: 320px;
+        border-radius: 3px;
+        border-top-right-radius: 3px;
+        box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.35);
+    }
+
+    .myapb-row {
+        margin: 0;
+        padding: 6px 15px;
+    }
+
+    .myapb-content {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        text-align: left;
+        font-size: 12px;
+        color: #141414;
+        background: #fefefe;
+        border-radius: 3px;
+        border-top-right-radius: 3px;
+        border-top: 3px solid #47a7eb;
+        box-sizing: border-box;
+        font: 14px / 1.4 sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        font-family: sans-serif;
+        font-family: Vazir, 'Segoe UI', 'Helvetica Neue', Helvetica, Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', sans-serif;
+        font-weight: 400;
+        color: #141414;
+        word-wrap: break-word;
+        overflow: auto;
+        max-height: 450px;
+        max-height: 80vh;
+        overflow: auto;
+        max-height: 450px;
+        max-height: 80vh;
+        border-top-right-radius: 0;
+    }
+
+    .myapb-header {
+        padding: 6px 15px;
+        margin: 0;
+        font-weight: 400;
+        text-decoration: none;
+        font-size: 15px;
+        color: #a4a4a4;
+        background: #181d1e;
+        border-bottom: 1px solid #dfdfdf;
+        background: #1b1c1c;
+    }
+
+    .myapb-footer.myapb-footer--split {
+        display: contents;
+        align-items: center;
+    }
+
+    .myapb-content> :last-child {
+        border-bottom-right-radius: 3px;
+        border-bottom-left-radius: 3px;
+    }
+
+    .myapb-footer {
+        padding: 6px 15px;
+        font-size: 11px;
+        color: #505050;
+        background: #f5f5f5;
+        border-top: 1px solid #dfdfdf;
+        background: linear-gradient(180deg, #f5f5f5, #fafafa);
+        float: left;
+    }
+
+    .myapb-footer-main a,
+    .myapb-footer-opposite a {
+        color: #000;
+        font-family: Tahoma, Verdana, Arial, Sans-Serif;
+        padding: 1vw;
+    }
+
+    @media screen and (min-width: 1296px) and (max-width:1920px) {}
+
+    @media screen and (min-width: 1251px) and (max-width:1295px) {}
+
+    @media screen and (min-width: 1236px) and (max-width:1250px) {}
+
+    @media screen and (min-width: 1191px) and (max-width:1235px) {}
+
+    @media screen and (min-width: 1066px) and (max-width:1190px) {}
+
+    @media screen and (min-width: 1025px) and (max-width:1065px) {}
+
+    @media screen and (min-width: 801px) and (max-width:1024px) {}
+
+    @media screen and (min-width: 641px) and (max-width:800px) {}
+
+    @media screen and (min-width: 481px) and (max-width:640px) {}
+
+    @media screen and (min-width: 401px) and (max-width:480px) {
+
+        #myalertsbx,
+        #myconvsbx {
+            position: fixed;
+        }
+
+    }
+
+    @media screen and (min-width: 321px) and (max-width :400px) {
+
+        #myalertsbx,
+        #myconvsbx {
+            position: fixed;
+        }
+
+    }
+
+    @media screen and (max-width:320px) {
+
+        #myalertsbx,
+        #myconvsbx {
+            position: fixed;
+        }
+    }
+
+    /**************************** Mypgr ***************************/
+</style>
