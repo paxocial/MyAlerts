@@ -8,6 +8,10 @@ define('THIS_SCRIPT', 'alerts.php');
 
 $templatelist = 'myalerts_alert_row_popup,myalerts_alert_row_popup_no_alerts,myalerts_modal_content';
 
+if (isset($_GET['action']) && $_GET['action'] == 'modal') {
+	defined('NO_ONLINE') or define('NO_ONLINE', 1);
+}
+
 require_once __DIR__ . '/global.php';
 
 $action = $mybb->get_input('action', MyBB::INPUT_STRING);
@@ -45,31 +49,15 @@ switch ($action) {
 	case 'delete_all':
 		myalerts_delete_all_alerts($mybb, $db, $lang);
 		break;
-	case 'mark_all_read':
-		// Will test true when backwards compatibility mode is on.
-		if ($mybb->get_input('ajax') == '1') {
-			$mybb->input['action'] = 'markAllRead';
-			$mybb->input['modal'] = '1';
-			myalerts_xmlhttp();
-			exit;
-		} else {
-			myalerts_mark_all_alerts_read($mybb, $lang);
-		}
+	case 'view_myalertpop':
+		myalerts_view_mypgr($mybb, $lang, $templates, $theme);
 		break;
-	case 'get_latest_alerts':
-		// Will test true when backwards compatibility mode is on.
-		if ($mybb->get_input('ajax') == '1') {
-			$mybb->input['action'] = 'getLatestAlerts';
-			myalerts_xmlhttp();
-			exit;
-		}
 	default:
 		if ($mybb->get_input('modal') == '1') {
-			$unreadOnly = !empty($mybb->cookies['myalerts_unread_only']) && $mybb->cookies['myalerts_unread_only'] != '0';
-			myalerts_view_modal($mybb, $lang, $templates, $theme, $unreadOnly);
-		} else {
-			myalerts_view_alerts($mybb, $lang, $templates, $theme);
-		}
+			myalerts_view_modal($mybb, $lang, $templates, $theme);
+        	} else {
+            		myalerts_view_alerts($mybb, $lang, $templates, $theme);
+        	}
 		break;
 }
 
@@ -96,8 +84,8 @@ function myalerts_redirect_alert($mybb, $lang)
 	}
 
 	/** @var MybbStuff_MyAlerts_Formatter_AbstractFormatter $alertTypeFormatter */
-	$alertTypeFormatter = MybbStuff_MyAlerts_AlertFormatterManager::getInstance()
-		->getFormatterForAlertType($alert->getType()->getCode());
+	$alertTypeFormatter = MybbStuff_MyAlerts_AlertFormatterManager::getInstance(
+	)->getFormatterForAlertType($alert->getType()->getCode());
 
 	if (!$alert || !$alertTypeFormatter) {
 		error($lang->myalerts_error_alert_not_found);
@@ -136,8 +124,11 @@ function myalerts_alert_settings(
 
 	$alertTypes = $alertTypeManager->getAlertTypes();
 
-	if (strtolower($mybb->request_method) == 'post') { // Saving alert type settings
-		verify_post_check($mybb->get_input('my_post_key'));
+	if (strtolower(
+			$mybb->request_method
+		) == 'post'
+	) { // Saving alert type settings
+	    verify_post_check($mybb->get_input('my_post_key'));
 
 		$disabledAlerts = array();
 
@@ -168,7 +159,7 @@ function myalerts_alert_settings(
 		);
 	} else { // Displaying alert type settings form
 
-		$content = $alertSettings = '';
+		$content = '';
 
 		global $headerinclude, $header, $footer, $usercpnav;
 
@@ -193,15 +184,20 @@ function myalerts_alert_settings(
 				if (!in_array(
 					$value['id'],
 					$mybb->user['myalerts_disabled_alert_types']
-				)) {
+				)
+				) {
 					$checked = ' checked="checked"';
 				}
 
-				eval("\$alertSettings .= \"" . $templates->get('myalerts_setting_row') . "\";");
+				eval("\$alertSettings .= \"" . $templates->get(
+						'myalerts_setting_row'
+					) . "\";");
 			}
 		}
 
-		eval("\$content = \"" . $templates->get('myalerts_settings_page') . "\";");
+		eval("\$content = \"" . $templates->get(
+				'myalerts_settings_page'
+			) . "\";");
 		output_page($content);
 	}
 }
@@ -238,32 +234,6 @@ function myalerts_delete_alert($mybb, $db, $lang)
 }
 
 /**
- * Mark all alerts as read.
- *
- * @param MyBB       $mybb MyBB core object.
- * @param MyLanguage $lang MyBB language system.
- */
-function myalerts_mark_all_alerts_read($mybb, $lang)
-{
-	verify_post_check($mybb->get_input('my_post_key'));
-
-	MybbStuff_MyAlerts_AlertManager::getInstance()->markAllRead();
-
-	$retLink = $mybb->get_input('ret_link', MyBB::INPUT_STRING);
-
-	if (!empty($retLink) && stripos($retLink, $mybb->settings['bburl']) === 0) {
-		$retLink = htmlspecialchars_uni($retLink);
-	} else {
-		$retLink = 'alerts.php?action=alerts';
-	}
-	redirect(
-		$retLink,
-		$lang->myalerts_marked_all_read_desc,
-		$lang->myalerts_marked_all_read_title
-	);
-}
-
-/**
  * Delete all read alerts.
  *
  * @param MyBB               $mybb MyBB core object.
@@ -281,20 +251,20 @@ function myalerts_delete_read_alerts($mybb, $db, $lang)
 	$retLink = $mybb->get_input('ret_link', MyBB::INPUT_STRING);
 
 	if (!empty($retLink) && stripos($retLink, $mybb->settings['bburl']) === 0) {
-		$retLink = htmlspecialchars_uni($retLink);
+	    $retLink = htmlspecialchars_uni($retLink);
 
-		redirect(
-			$retLink,
-			$lang->myalerts_delete_read,
-			$lang->myalerts_delete_read_deleted
-		);
-	} else {
-		redirect(
-			'alerts.php?action=alerts',
-			$lang->myalerts_delete_read,
-			$lang->myalerts_delete_read_deleted
-		);
-	}
+        redirect(
+            $retLink,
+            $lang->myalerts_delete_all,
+            $lang->myalerts_delete_mass_deleted
+        );
+    } else {
+        redirect(
+            'alerts.php?action=alerts',
+            $lang->myalerts_delete_all,
+            $lang->myalerts_delete_mass_deleted
+        );
+    }
 }
 
 /**
@@ -312,42 +282,42 @@ function myalerts_delete_all_alerts($mybb, $db, $lang)
 
 	$db->delete_query('alerts', "uid = {$userId}");
 
-	$retLink = $mybb->get_input('ret_link', MyBB::INPUT_STRING);
+    $retLink = $mybb->get_input('ret_link', MyBB::INPUT_STRING);
 
-	if (!empty($retLink) && stripos($retLink, $mybb->settings['bburl']) === 0) {
-		$retLink = htmlspecialchars_uni($retLink);
+    if (!empty($retLink) && stripos($retLink, $mybb->settings['bburl']) === 0) {
+        $retLink = htmlspecialchars_uni($retLink);
 
-		redirect(
-			$retLink,
-			$lang->myalerts_delete_all,
-			$lang->myalerts_delete_mass_deleted
-		);
-	} else {
-		redirect(
-			'alerts.php?action=alerts',
-			$lang->myalerts_delete_all,
-			$lang->myalerts_delete_mass_deleted
-		);
-	}
+        redirect(
+            $retLink,
+            $lang->myalerts_delete_all,
+            $lang->myalerts_delete_mass_deleted
+        );
+    } else {
+        redirect(
+            'alerts.php?action=alerts',
+            $lang->myalerts_delete_all,
+            $lang->myalerts_delete_mass_deleted
+        );
+    }
 }
 
 /**
  * View the modal.
  *
- * @param MyBB       $mybb       MyBB core object.
- * @param MyLanguage $lang       Language object.
- * @param templates  $templates  Template manager.
- * @param array      $theme      Details about the current theme.
- * @param boolean    $unreadOnly Whether to show only unread alerts.
+ * @param MyBB       $mybb      MyBB core object.
+ * @param MyLanguage $lang      Language object.
+ * @param templates  $templates Template manager.
+ * @param array      $theme     Details about the current theme.
  */
-function myalerts_view_modal($mybb, $lang, $templates, $theme, $unreadOnly = false)
+function myalerts_view_modal($mybb, $lang, $templates, $theme)
 {
+	defined('NO_ONLINE') or define('NO_ONLINE', 1);
+
 	$userAlerts = MybbStuff_MyAlerts_AlertManager::getInstance()
-		->getAlerts(
-			0,
-			$mybb->settings['myalerts_dropdown_limit'],
-			$unreadOnly
-		);
+	                                             ->getAlerts(
+		                                             0,
+		                                             $mybb->settings['myalerts_dropdown_limit']
+	                                             );
 
 	$alerts = '';
 
@@ -356,14 +326,6 @@ function myalerts_view_modal($mybb, $lang, $templates, $theme, $unreadOnly = fal
 			$altbg = alt_trow();
 
 			$alert = parse_alert($alertObject);
-
-			if ($alertObject->getUnread()) {
-				$markReadHiddenClass = '';
-				$markUnreadHiddenClass = ' hidden';
-			} else {
-				$markReadHiddenClass = ' hidden';
-				$markUnreadHiddenClass = '';
-			}
 
 			if ($alert['message']) {
 				$alerts .= eval($templates->render('myalerts_alert_row_popup'));
@@ -389,12 +351,49 @@ function myalerts_view_modal($mybb, $lang, $templates, $theme, $unreadOnly = fal
 		}
 	}
 
-	$unreadOnly = !empty($mybb->cookies['myalerts_unread_only']) && $mybb->cookies['myalerts_unread_only'] != '0';
-	$unreadOnlyChecked = $unreadOnly ? ' checked="checked"' : '';
-
 	$myalerts_modal = eval($templates->render('myalerts_modal_content', 1, 0));
 
 	echo $myalerts_modal;
+	exit;
+}
+function myalerts_view_mypgr($mybb, $lang, $templates, $theme)
+{
+	defined('NO_ONLINE') or define('NO_ONLINE', 1);
+
+	$userAlerts = MybbStuff_MyAlerts_AlertManager::getInstance()->getAlerts(0,$mybb->settings['myalerts_dropdown_limit']);
+
+	$alerts = '';
+
+	if (is_array($userAlerts) && !empty($userAlerts)) {
+		foreach ($userAlerts as $alertObject) {
+			$altbg = alt_trow();
+
+			$alert = parse_alert($alertObject);
+
+			if ($alert['message']) {
+				$alerts .= eval($templates->render('myalerts_alert_row_popup'));
+			}
+
+			$readAlerts[] = $alert['id'];
+		}
+	} else {
+		$altbg = 'trow1';
+
+		$alerts ='<tr class="myapb-row">You have no new notifications.</tr>';
+	}
+
+	$myalerts_return_link = $mybb->get_input('ret_link', MyBB::INPUT_STRING);
+
+	if (!empty($myalerts_return_link)) {
+		if (stripos($myalerts_return_link, $mybb->settings['bburl']) !== 0) {
+			$myalerts_return_link = '';
+		} else {
+			$myalerts_return_link = htmlspecialchars_uni(urlencode($myalerts_return_link));
+		}
+	}
+
+
+	echo $alerts;
 	exit;
 }
 
@@ -408,7 +407,7 @@ function myalerts_view_modal($mybb, $lang, $templates, $theme, $unreadOnly = fal
  */
 function myalerts_view_alerts($mybb, $lang, $templates, $theme)
 {
-	myalerts_create_instances();
+    myalerts_create_instances();
 
 	$alerts = MybbStuff_MyAlerts_AlertManager::getInstance()->getAlerts(0, 10);
 
@@ -422,7 +421,7 @@ function myalerts_view_alerts($mybb, $lang, $templates, $theme)
 	usercp_menu();
 
 	$numAlerts = MybbStuff_MyAlerts_AlertManager::getInstance()->getNumAlerts();
-	$page = $mybb->get_input('page', MyBB::INPUT_INT);
+	$page = (int) $mybb->input['page'];
 	$pages = ceil($numAlerts / $mybb->settings['myalerts_perpage']);
 
 	if ($page > $pages OR $page <= 0) {
@@ -447,7 +446,6 @@ function myalerts_view_alerts($mybb, $lang, $templates, $theme)
 	);
 
 	$readAlerts = array();
-	$alertsListing = '';
 
 	if (is_array($alertsList) && !empty($alertsList)) {
 		foreach ($alertsList as $alertObject) {
@@ -456,13 +454,6 @@ function myalerts_view_alerts($mybb, $lang, $templates, $theme)
 			$alert = parse_alert($alertObject);
 
 			if ($alert['message']) {
-				if ($alertObject->getUnread()) {
-					$markReadHiddenClass = '';
-					$markUnreadHiddenClass = ' hidden';
-				} else {
-					$markReadHiddenClass = ' hidden';
-					$markUnreadHiddenClass = '';
-				}
 				eval("\$alertsListing .= \"" . $templates->get(
 						'myalerts_alert_row'
 					) . "\";");
@@ -476,6 +467,8 @@ function myalerts_view_alerts($mybb, $lang, $templates, $theme)
 				'myalerts_alert_row_no_alerts'
 			) . "\";");
 	}
+
+	MybbStuff_MyAlerts_AlertManager::getInstance()->markRead($readAlerts);
 
 	global $headerinclude, $header, $footer, $usercpnav;
 

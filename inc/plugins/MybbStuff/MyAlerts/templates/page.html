@@ -4,17 +4,23 @@
     <script type="text/javascript">
         <!--
         var myalerts_autorefresh = {$mybb->settings['myalerts_autorefresh']};
-        var page = {$page};
-        var pages = {$pages};
         // -->
     </script>
     {$headerinclude}
+	
+<style>
+#myusercpnav{width: 13vw;float: left;}
+#myusercpnav{width: 13vw;float: left;}
+#myconvcn{width: 74vw;float: right;}
+</style>
 </head>
 <body>
 {$header}
+<div id="myconvpn">
+<div id="myusercpnav">{$usercpnav}</div>
+<div id="myconvcn">
 <table width="100%" border="0" align="center">
     <tr>
-        {$usercpnav}
         <td valign="top">
             <div class="float_right">
                 {$multipage}
@@ -29,10 +35,9 @@
                         <strong>{$lang->myalerts_page_title}</strong>
 
                         <div class="float_right">
-                            <a href="{$mybb->settings['bburl']}/alerts.php?action=mark_all_read&amp;my_post_key={$mybb->post_code}" onclick="return confirm('{$lang->myalerts_mark_all_read_confirm}')">{$lang->myalerts_page_mark_all_read}</a> |
                             <a href="{$mybb->settings['bburl']}/alerts.php?action=delete_read&amp;my_post_key={$mybb->post_code}" onclick="return confirm('{$lang->myalerts_delete_read_confirm}')">{$lang->myalerts_page_delete_read}</a> | 
                             <a href="{$mybb->settings['bburl']}/alerts.php?action=delete_all&amp;my_post_key={$mybb->post_code}" onclick="return confirm('{$lang->myalerts_delete_all_confirm}')">{$lang->myalerts_page_delete_all}</a> | 
-                            <a id="getLatestAlerts"
+                            <a id="getUnreadAlerts"
                                href="{$mybb->settings['bburl']}/alerts.php">{$lang->myalerts_page_getnew}</a>
                         </div>
                     </th>
@@ -49,6 +54,7 @@
         </td>
     </tr>
 </table>
+</div></div>
 {$footer}
 </body>
 </html>

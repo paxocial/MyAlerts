@@ -2,36 +2,24 @@
 $l['myalerts'] = 'MyAlerts';
 
 $l['myalerts_page_title'] = 'Recent Alerts';
-$l['myalerts_page_delete_read'] = 'Delete Read Alerts';
+$l['myalerts_page_delete_read'] = 'Delete Old Alerts';
 $l['myalerts_page_delete_all'] = 'Delete All Alerts';
-$l['myalerts_page_mark_all_read'] = 'Mark All Read';
 $l['myalerts_page_getnew'] = 'Check for New Alerts';
 $l['myalerts_page_row_read'] = '&#10003;';
-$l['myalerts_page_row_unread'] = '&orarr;';
-$l['myalerts_page_row_delete'] = '&#10005;';
+$l['myalerts_page_row_delete'] = 'X';
 $l['myalerts_page_row_read_title'] = 'Mark as Read';
-$l['myalerts_page_row_unread_title'] = 'Mark as Unread';
 $l['myalerts_page_row_delete_title'] = 'Delete Alert';
-$l['myalerts_page_more'] = 'Alerts overflow onto the next page. Click here to go there with visible pagination.';
 
 $l['myalerts_modal_title'] = 'Recent Alerts';
 $l['myalerts_modal_display_alerts'] = 'View Alerts';
-$l['myalerts_modal_unread_only'] = 'Show Unread Only';
-$l['myalerts_modal_delete_read'] = 'Delete Read Alerts';
+$l['myalerts_modal_delete_read'] = 'Delete Old Alerts';
 $l['myalerts_modal_delete_all'] = 'Delete All Alerts';
 $l['myalerts_modal_delete_read_confirm'] = 'Really delete all read alerts? This cannot be undone!';
 $l['myalerts_modal_delete_all_confirm'] = 'Really delete all alerts? This cannot be undone!';
 $l['myalerts_modal_row_read'] = '&#10003;';
-$l['myalerts_modal_row_unread'] = '&orarr;';
-$l['myalerts_modal_row_delete'] = '&#10005;';
-$l['myalerts_modal_mark_all_read'] = 'Mark All Read';
-$l['myalerts_modal_mark_all_read_confirm'] = 'Really mark all alerts read? This cannot be undone!';
+$l['myalerts_modal_row_delete'] = 'X';
 $l['myalerts_modal_row_read_title'] = 'Mark as Read';
-$l['myalerts_modal_row_unread_title'] = 'Mark as Unread';
 $l['myalerts_modal_row_delete_title'] = 'Delete Alert';
-
-$l['myalerts_marked_all_read_title'] = 'Marked All Read';
-$l['myalerts_marked_all_read_desc'] = 'All alerts were successfully marked as read.';
 
 $l['myalerts_alerts'] = 'Alerts';
 
@@ -43,13 +31,13 @@ $l['myalerts_unread_title'] = 'Unread Alerts';
 
 $l['myalerts_no_alerts'] = 'No alerts to display';
 $l['myalerts_rep'] = '{1} modified your reputation.';
-$l['myalerts_pm'] = '{1} sent you a new private message titled<br><strong>"{2}"</strong>';
+$l['myalerts_pm'] = '{1} sent you a new private message titled <strong>"{2}"</strong>.';
 $l['myalerts_buddylist'] = '{1} added you to their buddy list.';
-$l['myalerts_quoted'] = '{1} quoted you in<br><strong>"{2}"</strong>';
-$l['myalerts_post_threadauthor'] = '{1} replied to your thread<br><strong>"{2}"</strong> (<i>There may be more posts after this.</i>)';
-$l['myalerts_subscribed_thread'] = '{1} replied to your subscribed thread<br><strong>"{2}"</strong>';
-$l['myalerts_rated_threadauthor'] = '{1} rated your thread<br><strong>"{2}"</strong>';
-$l['myalerts_voted_threadauthor'] = '{1} voted in your poll in<br><strong>"{2}"</strong>';
+$l['myalerts_quoted'] = '{1} quoted you in <strong>"{2}"</strong>.';
+$l['myalerts_post_threadauthor'] = '{1} replied to your thread <strong>"{2}"</strong>. There may be more posts after this.';
+$l['myalerts_subscribed_thread'] = '{1} replied to your subscribed thread <strong>"{2}"</strong>.';
+$l['myalerts_rated_threadauthor'] = '{1} rated your thread <strong>"{2}"</strong>.';
+$l['myalerts_voted_threadauthor'] = '{1} voted in your poll in <strong>"{2}"</strong>.';
 
 $l['myalerts_setting_rep'] = 'Receive alert for reputation?';
 $l['myalerts_setting_pm'] = 'Receive alert for Private Message (PM)?';
@@ -69,21 +57,13 @@ $l['myalerts_delete_read_confirm'] = 'Really delete all read alerts? This cannot
 $l['myalerts_delete_all_confirm'] = 'Really delete all alerts? This cannot be undone!';
 $l['myalerts_delete_mass_deleted'] = 'Alerts Deleted';
 $l['myalerts_delete_all'] = 'All alerts deleted successfully.';
-$l['myalerts_mark_all_read_confirm'] = 'Really mark all alerts read? This cannot be undone!';
 
 $l['myalerts_usercp_nav'] = 'Alerts';
 $l['myalerts_usercp_nav_alerts'] = 'View Alerts';
 $l['myalerts_usercp_nav_settings'] = 'Alert Settings';
-$l['myalerts_usercp_nav_delete_read'] = 'Delete Read Alerts';
+$l['myalerts_usercp_nav_delete_read'] = 'Delete Old Alerts';
 $l['myalerts_usercp_nav_delete_all'] = 'Delete All Alerts';
-$l['myalerts_delete_read_deleted'] = 'Read Alerts Deleted';
-$l['myalerts_delete_read'] = 'Read alerts deleted successfully.';
 
 $l['myalerts_error_alert_not_found'] = 'Alert not found.';
 
 $l['myalerts_delete'] = 'Delete';
-
-// For the task when run from a user context via the task image bottom of page.
-// Duplicated in the admin language file for when the task runs from the ACP.
-$l['myalerts_task_cleanup_ran'] = 'Read alerts over {1} days old and unread alerts over {2} days old were deleted successfully!';
-$l['myalerts_task_cleanup_error'] = 'Something went wrong while cleaning up the alerts...';

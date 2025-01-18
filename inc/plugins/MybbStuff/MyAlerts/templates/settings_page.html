@@ -3,12 +3,20 @@
     <title>{$lang->myalerts_settings_page_title} -
         {$mybb->settings['bbname']}</title>
     {$headerinclude}
+	
+<style>
+#myusercpnav{width: 13vw;float: left;}
+#myusercpnav{width: 13vw;float: left;}
+#myconvcn{width: 74vw;float: right;}
+</style>
 </head>
 <body>
 {$header}
+<div id="myconvpn">
+<div id="myusercpnav">{$usercpnav}</div>
+<div id="myconvcn">
 <table width="100%" border="0" align="center">
     <tr>
-        {$usercpnav}
         <td valign="top">
             <form action="alerts.php?action=settings" method="post">
                 <input type="hidden" name="my_post_key"
@@ -36,7 +44,7 @@
             </form>
         </td>
     </tr>
-</table>
+</table></div></div>
 {$footer}
 </body>
 </html>

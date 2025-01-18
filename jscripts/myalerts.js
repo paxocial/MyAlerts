@@ -1,152 +1,172 @@
-(function ($, window, document) {
-  "use strict";
+;
+(function ($, window, document, my_post_key, undefined) {
+    this.MybbStuff = this.MybbStuff || {};
 
-  $(document).ready(function () {
-    //////////////////////////////////////////////////
-    // 1) POLL EVERY 30 SECONDS FOR UNREAD ALERTS+CONVS
-    //////////////////////////////////////////////////
-    setInterval(function () {
-      $.get("xmlhttp.php?action=getNumUnreadAlertsandconvs", function (data) {
-        let json;
-        try {
-          json = $.parseJSON(data);
-        } catch (e) {
-          console.error(
-            "JSON parse error from getNumUnreadAlertsandconvs:",
-            e,
-            data
-          );
-          return;
-        }
-        if (json && json.status === "done") {
-          // Update alerts badge
-          if (json.newalerts > 0) {
-            $("#alertnumnx")
-              .removeClass()
-              .addClass("pmnumber-box-new")
-              .text(json.newalerts);
-          } else {
-            $("#alertnumnx")
-              .removeClass()
-              .addClass("pmnumber-box")
-              .text(json.newalerts);
-          }
-          // Update conversations badge
-          if (json.newconvs > 0) {
-            $("#convnumnx")
-              .removeClass()
-              .addClass("pmnumber-box-new")
-              .text(json.newconvs);
-          } else {
-            $("#convnumnx")
-              .removeClass()
-              .addClass("pmnumber-box")
-              .text(json.newconvs);
-          }
-        } else {
-          console.warn(
-            "Unexpected JSON structure from getNumUnreadAlertsandconvs:",
-            json
-          );
-        }
-      }).fail(function (xhr, status, error) {
-        console.error("AJAX error getNumUnreadAlertsandconvs:", status, error);
-      });
-    }, 30000);
+    this.MybbStuff.MyAlerts = (function MyAlertsModule(window, $) {
+        var module = function MyAlerts() {
+            var unreadAlertsProxy = $.proxy(this.getUnreadAlerts, this),
+                deleteAlertProxy = $.proxy(this.deleteAlert, this),
+                markReadAlertProxy = $.proxy(this.markReadAlert, this),
+                bodySelector = $("body");
 
-    //////////////////////////////////////////////
-    // 2) ALERTS DROPDOWN: LOAD + TOGGLE
-    //////////////////////////////////////////////
-    $("#myalerts").on("click", function (e) {
-      e.preventDefault();
+            bodySelector.on("click", "#getUnreadAlerts", unreadAlertsProxy);
 
-      // Close other box
-      $("#myconvsbx").hide();
+            bodySelector.on("click", ".deleteAlertButton", deleteAlertProxy);
+            bodySelector.on("click", ".markReadAlertButton", markReadAlertProxy);
 
-      // Load alerts table
-      const $rows = $("#myalertsbx table.dropdown-rows");
-      $rows.html("<tr><td>Loading Alerts…</td></tr>");
-      $rows.load(
-        "alerts.php?action=view_myalertpop",
-        function (response, status, xhr) {
-          if (status === "error") {
-            console.error(
-              "Error loading alerts pop:",
-              xhr.status,
-              xhr.statusText
-            );
-            $rows.html("<tr><td>Error loading alerts</td></tr>");
-          } else {
-            if (!$.trim(response)) {
-              // If empty, fallback
-              $rows.html("<tr><td>No alerts found</td></tr>");
+            if (typeof myalerts_autorefresh !== 'undefined' && myalerts_autorefresh > 0) {
+                window.setInterval(function () {
+                    $.get('xmlhttp.php?action=getNewAlerts', function (data) {
+                        $('#latestAlertsListing').prepend(data);
+                    });
+                }, myalerts_autorefresh * 1000);
             }
-          }
-        }
-      );
 
-      // Toggle visibility
-      $("#myalertsbx").toggle("fast");
-    });
-
-    //////////////////////////////////////////////
-    // 3) CONVERSATIONS DROPDOWN: LOAD + TOGGLE
-    //////////////////////////////////////////////
-    $("#myconves").on("click", function (e) {
-      e.preventDefault();
-
-      // Close other box
-      $("#myalertsbx").hide();
-
-      // Load conv table
-      const $rows = $("#myconvsbx table.dropdown-rows");
-      $rows.html("<tr><td>Loading Conversations…</td></tr>");
-      $rows.load(
-        "converse.php?action=view_myconvpop",
-        function (response, status, xhr) {
-          if (status === "error") {
-            console.error(
-              "Error loading conv pop:",
-              xhr.status,
-              xhr.statusText
-            );
-            $rows.html("<tr><td>Error loading conversations</td></tr>");
-          } else {
-            if (!$.trim(response)) {
-              $rows.html("<tr><td>No conversations found</td></tr>");
+            if (typeof unreadAlerts !== 'undefined' && unreadAlerts > 0) {
+                document.title = document.title + ' (' + unreadAlerts + ')';
             }
-          }
-        }
-      );
+        };
 
-      // Toggle visibility
-      $("#myconvsbx").toggle("fast");
-    });
+        module.prototype.getUnreadAlerts = function getUnreadAlerts(event) {
+            event.preventDefault();
+            $.get('xmlhttp.php?action=getNewAlerts', function (data) {
+                $('#latestAlertsListing').prepend(data);
+            });
+        };
 
-    //////////////////////////////////////////////
-    // 4) CLICK OUTSIDE TO CLOSE BOTH BOXES
-    //////////////////////////////////////////////
-    $(document).on("click", function (e) {
-      const $target = $(e.target);
-      // If the click is NOT on #myalerts or #myalertsbx
-      // AND not on #myconves or #myconvsbx => close them
-      if (
-        !$target.closest("#myalerts, #myalertsbx").length &&
-        !$target.closest("#myconves, #myconvsbx").length
-      ) {
-        $("#myalertsbx").hide("fast");
-        $("#myconvsbx").hide("fast");
-      }
-    });
+        module.prototype.deleteAlert = function deleteAlert(event) {
+            event.preventDefault();
 
-    //////////////////////////////////////////////
-    // 5) ESC KEY TO CLOSE BOTH (OPTIONAL)
-    //////////////////////////////////////////////
-    $(document).on("keydown", function (e) {
-      if (e.key === "Escape") {
-        $("#myalertsbx").hide("fast");
-        $("#myconvsbx").hide("fast");
-      }
-    });
-  });
-})(jQuery, window, document);
+            var deleteButton = $(event.currentTarget),
+                alertId = deleteButton.attr("id").substring(13);
+
+            $.getJSON('xmlhttp.php?action=myalerts_delete', {
+                accessMethod: 'js',
+                id: alertId,
+                my_post_key: my_post_key
+            }, function (data) {
+                if (data.success) {
+                    deleteButton.parents('tr').get(0).remove();
+                }
+                else {
+                    for (var i = 0; i < data.errors.length; ++i) {
+                        console.log(data.errors[i]);
+                    }
+                    alert(data.errors[0]);
+                }
+            });
+
+            return false;
+        };
+
+        module.prototype.markReadAlert = function markReadAlert(event) {
+            event.preventDefault();
+
+            var button = $(event.currentTarget),
+                alertId = button.attr("id").substring(15);
+
+            $.getJSON('xmlhttp.php?action=myalerts_mark_read', {
+                accessMethod: 'js',
+                id: alertId,
+                my_post_key: my_post_key
+            }, function (data) {
+                if (data.success) {
+                    $(button.parents('tr').get(0)).removeClass('alert--unread').addClass('alert--read');
+                }
+                else {
+                    for (var i = 0; i < data.errors.length; ++i) {
+                        console.log(data.errors[i]);
+                    }
+                    alert(data.errors[0]);
+                }
+            });
+
+            return false;
+        };
+
+        return module;
+    })(window, jQuery);
+
+})(jQuery, window, document, my_post_key);
+//***************************** MYPGR O6 ****************************//
+$(document).ready(function () {
+	setInterval(function() {
+				$.get("xmlhttp.php?action=getNumUnreadAlertsandconvs", function(data) {
+				var json = $.parseJSON(data);	
+				if(typeof json == 'object')
+				{
+					if(json.hasOwnProperty("status"))
+					{
+						if(json.status == "done")
+						{
+						if(json.newalerts > 0)
+						{
+						$("#alertnumnx").removeClass().addClass('pmnumber-box-new');   
+						}
+						else
+						{
+						$("#alertnumnx").removeClass().addClass('pmnumber-box');   
+						}
+						if(json.newconvs > 0)
+						{
+						$("#convnumnx").removeClass().addClass('pmnumber-box-new');   
+						}
+						else
+						{
+						$("#convnumnx").removeClass().addClass('pmnumber-box');   
+						}
+						
+						$("#alertnumnx").text(json.newalerts);
+						$("#convnumnx").text(json.newconvs);
+							
+						}
+					}
+				}
+				  
+				});	
+ }, 30000);
+
+$('#myalerts').click(function(e){
+
+$("#myalertsbx table.myapb-rows").load("alerts.php?action=view_myalertpop");
+	if($('#myalertsbx').css('display') == 'none')
+	{
+	$("#myalertsbx").show("fast");
+	$("#myconvsbx").hide("fast");
+	}
+	else
+	{
+	$("#myalertsbx").hide("fast");
+	}
+
+});
+
+$(document.body).on("click", ":not(#myalerts,#myconves,#alertnumnx,#myalertsbx, #myalertsbx *,#myconvsbx, #myconvsbx *, .floatright *)", function(e){
+if($(this).attr("id") !="undefined" && $(this).attr("class") !="floatright")
+{
+$("#myalertsbx").hide("fast");
+$("#myconvsbx").hide("fast");
+}
+e.stopPropagation(); 
+});
+
+/**************************************** MYPGR O6 ***********************************/
+$('#myconves').click(function(e){
+	//$.get("converse.php?action=view_myconvpop", function(data) {$("#myconvsbx table.myapb-rows").html(data);});
+	$("#myconvsbx table.myapb-rows").load("converse.php?action=view_myconvpop");
+	if($('#myconvsbx').css('display') == 'none')
+	{
+	$("#myconvsbx").show("fast");
+	$("#myalertsbx").hide("fast");
+	}
+	else
+	{
+	$("#myconvsbx").hide("fast");
+	}
+
+});
+/**************************************** MYPGR O6 ***********************************/
+
+});
+//***************************** MYPGR O6 ****************************//
+
