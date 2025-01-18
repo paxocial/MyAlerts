@@ -2108,20 +2108,56 @@ function myalerts_acp_config_permissions(&$admin_permissions)
 $plugins->add_hook('build_forumbits_forum', 'cnv_build_forumbits_forum');
 function cnv_build_forumbits_forum($forum)
 {
-	global $db,$mybb;
-	if($forum['type'] =="c")
-	{
-	$query = $db->query("SELECT subject,tid,pid,dateline,uid FROM ".TABLE_PREFIX."posts WHERE fid IN (SELECT fid FROM ".TABLE_PREFIX."forums WHERE pid='{$forum['fid']}') ORDER BY dateline DESC LIMIT 1");
-	$row = $db->fetch_array($query);
-	$user = get_user($row['uid']);
-	$avatar = ($user['avatar'] == "") ?"images/default_avatar.png":$user['avatar'];
-	$forum['lpfpostinfo'] = '<div id="myfc_pt"><a href="showthread.php?tid='.$row['tid'].'&pid='.$row['pid'].'#pid'.$row['pid'].'">'.$row['subject'].'</a></div>';
-	$forum['lpfpostinfo'] .= '<div id="myfc_pd">'.my_date($mybb->settings['dateformat'], $row['dateline']).'</div>';
-	$forum['lpfpostinfo'] .= '<div id="myfc_pu"><a href="member.php?action=profile&uid='.$row['uid'].'"><img src="'.$avatar.'" /></a></div>';
+	global $db, $mybb;
+
+	// Check if the forum type is 'c' (category)
+	if ($forum['type'] == "c") {
+		// Prepare and execute the SQL query to fetch the latest post in subforums
+		$query = $db->query("
+			SELECT subject, tid, pid, dateline, uid
+			FROM " . TABLE_PREFIX . "posts
+			WHERE fid IN (
+				SELECT fid
+				FROM " . TABLE_PREFIX . "forums
+				WHERE pid='{$forum['fid']}'
+			)
+			ORDER BY dateline DESC
+			LIMIT 1
+		");
+
+		// Fetch the result as an associative array
+		$row = $db->fetch_array($query);
+
+		// Check if a post was found
+		if (!$row) {
+			// No posts found; you can choose to set default content or leave it empty
+			$forum['lpfpostinfo'] = '<div id="myfc_pt">' . $lang->myalerts_no_posts . '</div>';
+			$forum['lpfpostinfo'] .= '<div id="myfc_pd"></div>';
+			$forum['lpfpostinfo'] .= '<div id="myfc_pu"></div>';
+			return $forum;
+		}
+
+		// Retrieve the user who made the post
+		$user = get_user($row['uid']);
+
+		// Check if the user exists
+		if (!$user || empty($user['avatar'])) {
+			// User not found or no avatar set; use default avatar
+			$avatar = "images/default_avatar.png";
+		} else {
+			// Use the user's avatar
+			$avatar = $user['avatar'];
+		}
+
+		// Construct the post information HTML
+		$forum['lpfpostinfo'] = '<div id="myfc_pt"><a href="showthread.php?tid=' . intval($row['tid']) . '&pid=' . intval($row['pid']) . '#pid' . intval($row['pid']) . '">' . htmlspecialchars_uni($row['subject']) . '</a></div>';
+		$forum['lpfpostinfo'] .= '<div id="myfc_pd">' . my_date($mybb->settings['dateformat'], $row['dateline']) . '</div>';
+		$forum['lpfpostinfo'] .= '<div id="myfc_pu"><a href="member.php?action=profile&uid=' . intval($row['uid']) . '"><img src="' . htmlspecialchars_uni($avatar) . '" alt="' . htmlspecialchars_uni($user['username'] ?? 'User') . '\'s Avatar" /></a></div>';
 	}
 
 	return $forum;
 }
+
 
 /*************** MYPGR O6 ***************/
 function myalerts_can_view_thread($fid, $thread_uid, $alerted_uid) {
