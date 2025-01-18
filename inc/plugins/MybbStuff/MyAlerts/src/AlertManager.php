@@ -391,7 +391,7 @@ class MybbStuff_MyAlerts_AlertManager
 
 				$toCommit[] = $alertArray;
 			}
-			
+
 			// Empty the alert queue.
 			static::$alertQueue = array();
 
@@ -561,6 +561,50 @@ SQL;
 
 		return $alerts;
 	}
+function myalerts_create_instances()
+{
+    global $mybb, $db, $cache, $lang, $plugins;
+
+    if (!isset($lang->myalerts)) {
+        $lang->load('myalerts');
+    }
+
+    $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
+
+    if (is_null($alertTypeManager) || $alertTypeManager === false) {
+        $alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance(
+            $db,
+            $cache
+        );
+    }
+
+    $alertManager = MybbStuff_MyAlerts_AlertManager::getInstance();
+
+    if (is_null($alertManager) || $alertManager === false) {
+        $alertManager = MybbStuff_MyAlerts_AlertManager::createInstance(
+            $mybb,
+            $db,
+            $cache,
+            $plugins,
+            $alertTypeManager
+        );
+    }
+
+    $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
+
+    if (is_null($formatterManager) || $formatterManager === false) {
+        $formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::createInstance($mybb, $lang);
+    }
+
+    myalerts_register_core_formatters($mybb, $lang);
+
+    if (!MybbStuff_MyAlerts_AlertManager::$isCommitRegistered) {
+        register_shutdown_function(
+            array(MybbStuff_MyAlerts_AlertManager::getInstance(), 'commit')
+        );
+        MybbStuff_MyAlerts_AlertManager::$isCommitRegistered = true;
+    }
+}
 
 	/**
 	 *  Fetch all unread alerts for the currently logged in user.

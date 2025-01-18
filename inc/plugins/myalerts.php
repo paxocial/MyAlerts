@@ -1947,7 +1947,10 @@ function myalerts_xmlhttp()
 }
 // Safely check if 'action' is set and equals 'getNumUnreadAlertsandconvs'
 if (isset($mybb->input['action']) && $mybb->input['action'] === 'getNumUnreadAlertsandconvs') {
-    global $db, $mybb;
+    global $db, $mybb, $plugins, $cache; // Ensure all necessary globals are included
+	  // Initialize AlertManager and related instances
+    myalerts_create_instances();
+
 	$uid = (int)$mybb->user['uid']; // Sanitize user ID
 
     // Prepare SQL query to prevent SQL injection
@@ -2108,55 +2111,56 @@ function myalerts_acp_config_permissions(&$admin_permissions)
 $plugins->add_hook('build_forumbits_forum', 'cnv_build_forumbits_forum');
 function cnv_build_forumbits_forum($forum)
 {
-	global $db, $mybb;
+    global $db, $mybb, $lang; // Declare $lang as global
 
-	// Check if the forum type is 'c' (category)
-	if ($forum['type'] == "c") {
-		// Prepare and execute the SQL query to fetch the latest post in subforums
-		$query = $db->query("
-			SELECT subject, tid, pid, dateline, uid
-			FROM " . TABLE_PREFIX . "posts
-			WHERE fid IN (
-				SELECT fid
-				FROM " . TABLE_PREFIX . "forums
-				WHERE pid='{$forum['fid']}'
-			)
-			ORDER BY dateline DESC
-			LIMIT 1
-		");
+    // Check if the forum type is 'c' (category)
+    if ($forum['type'] == "c") {
+        // Prepare and execute the SQL query to fetch the latest post in subforums
+        $query = $db->query("
+            SELECT subject, tid, pid, dateline, uid
+            FROM " . TABLE_PREFIX . "posts
+            WHERE fid IN (
+                SELECT fid
+                FROM " . TABLE_PREFIX . "forums
+                WHERE pid='{$forum['fid']}'
+            )
+            ORDER BY dateline DESC
+            LIMIT 1
+        ");
 
-		// Fetch the result as an associative array
-		$row = $db->fetch_array($query);
+        // Fetch the result as an associative array
+        $row = $db->fetch_array($query);
 
-		// Check if a post was found
-		if (!$row) {
-			// No posts found; you can choose to set default content or leave it empty
-			$forum['lpfpostinfo'] = '<div id="myfc_pt">' . $lang->myalerts_no_posts . '</div>';
-			$forum['lpfpostinfo'] .= '<div id="myfc_pd"></div>';
-			$forum['lpfpostinfo'] .= '<div id="myfc_pu"></div>';
-			return $forum;
-		}
+        // Check if a post was found
+        if (!$row) {
+            // No posts found; assign a default message
+            $forum['lpfpostinfo'] = '<div id="myfc_pt"> No recent posts available. </div>';
+            $forum['lpfpostinfo'] .= '<div id="myfc_pd"></div>';
+            $forum['lpfpostinfo'] .= '<div id="myfc_pu"></div>';
+            return $forum;
+        }
 
-		// Retrieve the user who made the post
-		$user = get_user($row['uid']);
+        // Retrieve the user who made the post
+        $user = get_user($row['uid']);
 
-		// Check if the user exists
-		if (!$user || empty($user['avatar'])) {
-			// User not found or no avatar set; use default avatar
-			$avatar = "images/default_avatar.png";
-		} else {
-			// Use the user's avatar
-			$avatar = $user['avatar'];
-		}
+        // Check if the user exists and has an avatar
+        if (!$user || empty($user['avatar'])) {
+            // User not found or no avatar set; use default avatar
+            $avatar = "images/default_avatar.png";
+        } else {
+            // Use the user's avatar
+            $avatar = $user['avatar'];
+        }
 
-		// Construct the post information HTML
-		$forum['lpfpostinfo'] = '<div id="myfc_pt"><a href="showthread.php?tid=' . intval($row['tid']) . '&pid=' . intval($row['pid']) . '#pid' . intval($row['pid']) . '">' . htmlspecialchars_uni($row['subject']) . '</a></div>';
-		$forum['lpfpostinfo'] .= '<div id="myfc_pd">' . my_date($mybb->settings['dateformat'], $row['dateline']) . '</div>';
-		$forum['lpfpostinfo'] .= '<div id="myfc_pu"><a href="member.php?action=profile&uid=' . intval($row['uid']) . '"><img src="' . htmlspecialchars_uni($avatar) . '" alt="' . htmlspecialchars_uni($user['username'] ?? 'User') . '\'s Avatar" /></a></div>';
-	}
+        // Construct the post information HTML with proper sanitization
+        $forum['lpfpostinfo'] = '<div id="myfc_pt"><a href="showthread.php?tid=' . intval($row['tid']) . '&pid=' . intval($row['pid']) . '#pid' . intval($row['pid']) . '">' . htmlspecialchars_uni($row['subject']) . '</a></div>';
+        $forum['lpfpostinfo'] .= '<div id="myfc_pd">' . my_date($mybb->settings['dateformat'], $row['dateline']) . '</div>';
+        $forum['lpfpostinfo'] .= '<div id="myfc_pu"><a href="member.php?action=profile&uid=' . intval($row['uid']) . '"><img src="' . htmlspecialchars_uni($avatar) . '" alt="' . htmlspecialchars_uni(isset($user['username']) ? $user['username'] : 'User') . '\'s Avatar" /></a></div>';
+    }
 
-	return $forum;
+    return $forum;
 }
+
 
 
 /*************** MYPGR O6 ***************/
